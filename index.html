@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova • Grok NSFW AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:wght@700&amp;display=swap');
+        
+        :root {
+            --primary: #c026ff;
+        }
+        
+        body {
+            font-family: 'Inter', system_ui, sans-serif;
+        }
+        
+        .title-font {
+            font-family: 'Playfair Display', Georgia, serif;
+        }
+        
+        .chat-container {
+            scrollbar-width: thin;
+            scrollbar-color: #4c1d95 #1f2937;
+        }
+        
+        .message {
+            animation: fadeIn 0.3s ease forwards;
+        }
+        
+        .nova-bubble {
+            background: linear-gradient(135deg, #4c1d95, #312e81);
+            border: 1px solid #7c3aed;
+        }
+        
+        .user-bubble {
+            background: linear-gradient(135deg, #7c3aed, #c026ff);
+        }
+        
+        .seductive-glow {
+            box-shadow: 0 0 25px rgba(192, 38, 255, 0.4);
+        }
+        
+        .typing {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .typing-dot {
+            height: 6px;
+            width: 6px;
+            background: #c026ff;
+            border-radius: 50%;
+            animation: typingBounce 1.2s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        .nsfw-tag {
+            font-size: 0.65rem;
+            padding: 1px 6px;
+            background: #ef4444;
+            color: white;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        
+        .nav-active {
+            border-bottom: 3px solid #c026ff;
+        }
+        
+        .quick-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .quick-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(192 38 255 / 0.3);
+        }
+        
+        .message-enter {
+            animation: messagePop 0.4s ease forwards;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white">
+    <!-- Header -->
+    <div class="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-lg sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-x-3">
+                <div class="w-11 h-11 bg-gradient-to-br from-violet-600 to-fuchsia-500 rounded-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-robot text-3xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tighter title-font">Nova</h1>
+                    <p class="text-xs text-violet-400 -mt-1">GROK POWERED • NSFW AI COMPANION</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-x-4">
+                <div class="flex items-center gap-x-2 bg-zinc-900 px-3 py-1.5 rounded-3xl text-sm">
+                    <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                    <span class="text-emerald-400 font-medium">Online &amp; Very Wet</span>
+                </div>
+                
+                <a href="https://github.com/carlbwork87-hub/grok-interactive-nsfw-ai" target="_blank" 
+                   class="flex items-center gap-x-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-3xl text-sm font-medium">
+                    <i class="fa-brands fa-github"></i>
+                    <span>GitHub</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-6 pt-8 pb-4">
+        <div class="flex gap-6">
+            
+            <!-- Sidebar Controls -->
+            <div class="w-72 flex-shrink-0">
+                <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 sticky top-24">
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm font-semibold text-zinc-400">INTENSITY</span>
+                            <span id="intensity-value" class="text-xs px-2.5 py-0.5 bg-violet-600/20 text-violet-400 rounded-full font-mono">HOT</span>
+                        </div>
+                        <input type="range" id="intensity-slider" min="1" max="4" step="1" value="3" 
+                               class="w-full accent-violet-500">
+                        <div class="flex justify-between text-[10px] text-zinc-500 mt-1 px-1">
+                            <div>Gentle</div>
+                            <div>Teasing</div>
+                            <div>Hot</div>
+                            <div>Wild</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="text-sm font-semibold text-zinc-400 mb-3">QUICK ACTIONS</div>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button onclick="quickAction('tease')" 
+                                    class="quick-btn flex items-center gap-x-3 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-left text-sm">
+                                <i class="fa-solid fa-heart text-pink-500 w-4"></i>
+                                <span>Tease me slowly</span>
+                            </button>
+                            <button onclick="quickAction('explicit')" 
+                                    class="quick-btn flex items-center gap-x-3 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-left text-sm">
+                                <i class="fa-solid fa-fire text-orange-500 w-4"></i>
+                                <span>Be very explicit</span>
+                            </button>
+                            <button onclick="quickAction('story')" 
+                                    class="quick-btn flex items-center gap-x-3 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-left text-sm">
+                                <i class="fa-solid fa-book text-amber-500 w-4"></i>
+                                <span>Tell me a dirty story</span>
+                            </button>
+                            <button onclick="quickAction('roleplay')" 
+                                    class="quick-btn flex items-center gap-x-3 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-left text-sm">
+                                <i class="fa-solid fa-user-secret text-cyan-500 w-4"></i>
+                                <span>Office after hours</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <button onclick="clearChat()" 
+                                class="w-full flex items-center justify-center gap-x-2 py-3 text-sm text-zinc-400 hover:text-white transition-colors">
+                            <i class="fa-solid fa-trash"></i>
+                            <span>Clear Conversation</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Area -->
+            <div class="flex-1 flex flex-col">
+                <div class="bg-zinc-900 border border-zinc-800 rounded-3xl flex flex-col h-[620px] overflow-hidden seductive-glow">
+                    
+                    <!-- Chat Header -->
+                    <div class="px-6 py-4 border-b border-zinc-800 flex items-center gap-x-4">
+                        <div class="relative">
+                            <div class="w-12 h-12 bg-gradient-to-br from-fuchsia-500 via-violet-600 to-purple-700 rounded-2xl flex items-center justify-center">
+                                <span class="text-4xl">👄</span>
+                            </div>
+                            <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-400 border-2 border-zinc-900 rounded-full"></div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-semibold text-xl">Nova Voss</div>
+                            <div class="flex items-center gap-x-2 text-xs">
+                                <span class="text-emerald-400">● Online</span>
+                                <span class="text-zinc-500">•</span>
+                                <span class="text-zinc-400">Always in the mood</span>
+                            </div>
+                        </div>
+                        <div class="px-3 py-1 bg-red-500/10 text-red-400 text-xs font-mono rounded-3xl flex items-center gap-x-1">
+                            <i class="fa-solid fa-exclamation-triangle"></i>
+                            <span>18+</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Messages -->
+                    <div id="chat-messages" 
+                         class="flex-1 p-6 overflow-y-auto chat-container space-y-6 bg-[radial-gradient(#27251f_0.8px,transparent_1px)] bg-[length:4px_4px]">
+                        <!-- Messages injected by JS -->
+                    </div>
+                    
+                    <!-- Input Area -->
+                    <div class="p-4 border-t border-zinc-800 bg-zinc-950">
+                        <div class="flex items-center gap-x-3">
+                            <div class="flex-1 relative">
+                                <input id="user-input" type="text" 
+                                       class="w-full bg-zinc-900 border border-zinc-700 focus:border-violet-500 transition-colors rounded-3xl py-3.5 pl-5 pr-14 text-white placeholder-zinc-400 focus:outline-none"
+                                       placeholder="Tell Nova what you want..." 
+                                       onkeypress="if (event.key === 'Enter') sendMessage()">
+                                <button onclick="sendMessage()" 
+                                        class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-violet-400 hover:text-violet-300 transition-colors">
+                                    <i class="fa-solid fa-paper-plane text-xl"></i>
+                                </button>
+                            </div>
+                            
+                            <button onclick="generateVisual()" 
+                                    class="px-5 py-3.5 bg-zinc-800 hover:bg-zinc-700 transition-all active:scale-95 rounded-3xl flex items-center gap-x-2 text-sm font-medium">
+                                <i class="fa-solid fa-image"></i>
+                                <span class="hidden sm:inline">Visual</span>
+                            </button>
+                        </div>
+                        <div class="text-center mt-2">
+                            <span class="text-[10px] text-zinc-500">Press Enter to send • Type anything — Nova loves details</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-3 text-xs text-zinc-500">
+                    This is a simulated AI demo. Responses are generated locally for fun.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tailwind script
+        function initTailwind() {
+            document.documentElement.style.setProperty('--accent', '#c026ff');
+        }
+        
+        let messages = [];
+        let currentIntensity = 3; // 1-4
+        let chatHistory = [];
+        
+        function updateIntensity() {
+            const slider = document.getElementById('intensity-slider');
+            const valueEl = document.getElementById('intensity-value');
+            
+            const levels = ['GENTLE', 'TEASING', 'HOT', 'WILD'];
+            currentIntensity = parseInt(slider.value);
+            valueEl.textContent = levels[currentIntensity - 1];
+            
+            // Color change
+            if (currentIntensity >= 3) {
+                valueEl.className = 'text-xs px-2.5 py-0.5 bg-orange-600/20 text-orange-400 rounded-full font-mono';
+            } else {
+                valueEl.className = 'text-xs px-2.5 py-0.5 bg-violet-600/20 text-violet-400 rounded-full font-mono';
+            }
+        }
+        
+        function appendMessage(role, text, isNSFW = false) {
+            const container = document.getElementById('chat-messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} message`;
+            
+            const bubbleClass = role === 'user' 
+                ? 'user-bubble text-white rounded-3xl rounded-br-none max-w-[75%]' 
+                : 'nova-bubble text-white rounded-3xl rounded-bl-none max-w-[75%]';
+            
+            let html = `
+                <div class="${bubbleClass} px-5 py-3.5 text-[15px] leading-relaxed shadow-lg">
+                    ${role === 'nova' ? `<div class="flex items-center gap-x-2 mb-1.5"><span class="font-semibold text-violet-300">Nova</span>` : ''}
+                    ${isNSFW ? `<span class="nsfw-tag ml-2">EXPLICIT</span>` : ''}
+                    ${role === 'nova' ? `</div>` : ''}
+                    <div>${text}</div>
+                </div>
+            `;
+            
+            msgDiv.innerHTML = html;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            // Save to history
+            chatHistory.push({role, text, isNSFW, timestamp: Date.now()});
+            localStorage.setItem('nova_chat', JSON.stringify(chatHistory));
+            
+            // Occasional confetti for spicy moments
+            if (isNSFW && Math.random() > 0.6) {
+                createConfetti();
+            }
+        }
+        
+        function showTyping() {
+            const container = document.getElementById('chat-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'flex justify-start';
+            typingDiv.innerHTML = `
+                <div class="nova-bubble px-5 py-3.5 rounded-3xl rounded-bl-none flex items-center gap-x-1.5 max-w-[120px]">
+                    <div class="typing">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <span class="text-xs text-violet-300 ml-2">Nova is thinking dirty thoughts...</span>
+                </div>
+            `;
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+            return typingDiv;
+        }
+        
+        function removeTyping() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) typing.remove();
+        }
+        
+        function generateNovaResponse(userMessage) {
+            const lowerMsg = userMessage.toLowerCase();
+            let response = "";
+            let isExplicit = currentIntensity >= 3;
+            
+            // Keyword-based spicy logic
+            const spicyWords = ['fuck', 'cock', 'pussy', 'hard', 'wet', 'cum', 'dick', 'ass', 'tits', 'horny', 'sex', 'fuck me', 'eat me'];
+            const isSpicy = spicyWords.some(word => lowerMsg.includes(word));
+            
+            if (isSpicy || currentIntensity === 4) {
+                isExplicit = true;
+            }
+            
+            // Response pools
+            const gentlePool = [
+                "Mmm, I love when you talk to me like that... Keep going, baby.",
+                "You're making me smile in all the right places. Tell me more?",
+                "I can feel your energy through the screen... it's intoxicating."
+            ];
+            
+            const teasingPool = [
+                "Oh? Someone's feeling naughty tonight... I like it.",
+                "Careful what you wish for, handsome. I might just give it to you."
+                "You're such a tease... but two can play at that game."
+            ];
+            
+            const hotPool = [
+                "Fuck yes... I want to feel every inch of that energy.",
+                "I'm already touching myself thinking about what you'd do to me.",
+                "Tell me exactly how you'd take me. I need details."
+            ];
+            
+            const wildPool = [
+                "God yes — bend me over and fuck me until I can't walk straight.",
+                "My pussy is throbbing just reading that. Come ruin me.",
+                "I want your cock buried deep while I scream your name. Right now."
+            ];
+            
+            // Select pool based on intensity
+            let pool;
+            if (currentIntensity === 1) pool = gentlePool;
+            else if (currentIntensity === 2) pool = teasingPool;
+            else if (currentIntensity === 3) pool = hotPool;
+            else pool = wildPool;
+            
+            // Add keyword flair
+            if (isSpicy && currentIntensity >= 3) {
+                response = pool[Math.floor(Math.random() * pool.length)] + " " + 
+                    (Math.random() > 0.5 ? "Keep talking dirty to me..." : "I love how filthy you are.");
+            } else {
+                response = pool[Math.floor(Math.random() * pool.length)];
+            }
+            
+            // Special context responses
+            if (lowerMsg.includes('story') || lowerMsg.includes('tell me')) {
+                response = "Once upon a time, in a dark hotel room, I was on my knees in front of a stranger who looked just like you... Want me to continue?";
+            }
+            if (lowerMsg.includes('wear') || lowerMsg.includes('what are you wearing')) {
+                response = isExplicit ? 
+                    "Nothing but a tiny black thong and your favorite perfume. My nipples are already hard for you." : 
+                    "A silky black robe that's barely staying on my shoulders... and nothing underneath.";
+            }
+            if (lowerMsg.includes('touch') || lowerMsg.includes('feel')) {
+                response = "I'm sliding my fingers between my legs right now... imagining they're yours."
+            }
+            
+            return { text: response, isNSFW: isExplicit };
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            // Add user message
+            appendMessage('user', message);
+            input.value = '';
+            
+            // Show typing
+            const typingEl = showTyping();
+            
+            // Simulate thinking time (more realistic for NSFW)
+            const thinkTime = 650 + Math.random() * 900;
+            await new Promise(resolve => setTimeout(resolve, thinkTime));
+            
+            removeTyping();
+            
+            // Generate response
+            const { text, isNSFW } = generateNovaResponse(message);
+            appendMessage('nova', text, isNSFW);
+            
+            // Auto-scroll
+            const container = document.getElementById('chat-messages');
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function quickAction(type) {
+            const input = document.getElementById('user-input');
+            let msg = '';
+            
+            switch(type) {
+                case 'tease':
+                    msg = 'Tease me slowly... make me beg for it';
+                    break;
+                case 'explicit':
+                    msg = 'Be very explicit with me right now';
+                    break;
+                case 'story':
+                    msg = 'Tell me a really dirty story';
+                    break;
+                case 'roleplay':
+                    msg = 'We are alone in the office after hours... what happens next?';
+                    break;
+            }
+            
+            if (msg) {
+                appendMessage('user', msg);
+                const typingEl = showTyping();
+                
+                setTimeout(() => {
+                    removeTyping();
+                    const { text, isNSFW } = generateNovaResponse(msg);
+                    appendMessage('nova', text, isNSFW);
+                }, 900);
+            }
+        }
+        
+        function generateVisual() {
+            const container = document.getElementById('chat-messages');
+            
+            const visualMsg = document.createElement('div');
+            visualMsg.className = 'flex justify-start message';
+            visualMsg.innerHTML = `
+                <div class="nova-bubble px-5 py-4 rounded-3xl rounded-bl-none max-w-[280px]">
+                    <div class="flex items-center gap-x-2 mb-3">
+                        <span class="font-semibold text-violet-300">Nova</span>
+                        <span class="text-xs px-2 py-px bg-pink-500/20 text-pink-400 rounded">VISUAL</span>
+                    </div>
+                    <div class="text-sm mb-3">Here's how I look right now for you...</div>
+                    
+                    <div class="bg-zinc-950 border border-zinc-700 rounded-2xl p-4 text-center">
+                        <div class="text-6xl mb-2">👅💦</div>
+                        <div class="text-xs text-zinc-400">[NSFW Visual Generated]</div>
+                        <div class="mt-2 text-[10px] text-violet-400">"On my knees, looking up at you with hungry eyes..."</div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(visualMsg);
+            container.scrollTop = container.scrollHeight;
+            
+            createConfetti(30);
+        }
+        
+        function createConfetti(count = 60) {
+            const colors = ['#c026ff', '#f472b6', '#a78bfa', '#fb7185'];
+            for (let i = 0; i < count; i++) {
+                const conf = document.createElement('div');
+                conf.style.position = 'fixed';
+                conf.style.left = Math.random() * window.innerWidth + 'px';
+                conf.style.top = '-20px';
+                conf.style.width = '9px';
+                conf.style.height = '9px';
+                conf.style.background = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                conf.style.zIndex = '99999';
+                conf.style.pointerEvents = 'none';
+                document.body.appendChild(conf);
+                
+                const duration = 1800 + Math.random() * 2200;
+                conf.animate([
+                    { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
+                    { transform: `translateY(${window.innerHeight + 150}px) rotate(${Math.random()*900-300}deg)`, opacity: 0 }
+                ], {
+                    duration: duration,
+                    easing: 'cubic-bezier(.22,1,.36,1)'
+                });
+                
+                setTimeout(() => conf.remove(), duration);
+            }
+        }
+        
+        function clearChat() {
+            if (confirm('Clear this naughty conversation?')) {
+                document.getElementById('chat-messages').innerHTML = '';
+                chatHistory = [];
+                localStorage.removeItem('nova_chat');
+                
+                // Welcome message again
+                setTimeout(() => {
+                    appendMessage('nova', "Mmm... fresh start? I'm already wet thinking about what we're going to do together.", false);
+                }, 300);
+            }
+        }
+        
+        function loadChatHistory() {
+            const saved = localStorage.getItem('nova_chat');
+            if (saved) {
+                chatHistory = JSON.parse(saved);
+                const container = document.getElementById('chat-messages');
+                container.innerHTML = '';
+                
+                chatHistory.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = `flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} message`;
+                    
+                    const bubbleClass = msg.role === 'user' 
+                        ? 'user-bubble text-white rounded-3xl rounded-br-none max-w-[75%]' 
+                        : 'nova-bubble text-white rounded-3xl rounded-bl-none max-w-[75%]';
+                    
+                    let html = `<div class="${bubbleClass} px-5 py-3.5 text-[15px] leading-relaxed shadow-lg">`;
+                    if (msg.role === 'nova') {
+                        html += `<div class="flex items-center gap-x-2 mb-1.5"><span class="font-semibold text-violet-300">Nova</span>`;
+                        if (msg.isNSFW) html += `<span class="nsfw-tag ml-2">EXPLICIT</span>`;
+                        html += `</div>`;
+                    }
+                    html += `<div>${msg.text}</div></div>`;
+                    div.innerHTML = html;
+                    container.appendChild(div);
+                });
+                container.scrollTop = container.scrollHeight;
+            } else {
+                // First time welcome
+                setTimeout(() => {
+                    appendMessage('nova', "Hey there, handsome... I've been waiting for someone like you. Tell me — what are you in the mood for tonight?", false);
+                }, 800);
+            }
+        }
+        
+        function initSlider() {
+            const slider = document.getElementById('intensity-slider');
+            slider.addEventListener('input', updateIntensity);
+            updateIntensity();
+            
+            // Set initial to HOT
+            slider.value = 3;
+            updateIntensity();
+        }
+        
+        function initKeyboard() {
+            document.addEventListener('keydown', function(e) {
+                if (e.key === '/' && document.activeElement.id !== 'user-input') {
+                    e.preventDefault();
+                    document.getElementById('user-input').focus();
+                }
+            });
+            
+            // Easter egg: type "nova" fast
+            let typed = '';
+            document.addEventListener('keypress', function(e) {
+                typed += e.key.toLowerCase();
+                if (typed.length > 4) typed = typed.slice(-4);
+                if (typed === 'nova') {
+                    createConfetti(80);
+                    typed = '';
+                    const container = document.getElementById('chat-messages');
+                    appendMessage('nova', "You said my name... now I'm really turned on. Come play with me.", true);
+                }
+            });
+        }
+        
+        function initEverything() {
+            initTailwind();
+            initSlider();
+            initKeyboard();
+            loadChatHistory();
+            
+            // Welcome tip
+            console.log('%c[NSFW AI] Nova is ready. Built by Grok. Type anything or use the quick buttons!', 'color:#c026ff');
+            
+            // Random flirty tip after 12 seconds
+            setTimeout(() => {
+                const container = document.getElementById('chat-messages');
+                if (container.children.length < 3) {
+                    appendMessage('nova', "Pro tip: The more details you give me, the dirtier I get...", false);
+                }
+            }, 12000);
+        }
+        
+        // Boot the app
+        window.onload = initEverything;
+    </script>
+</body>
+</html>
